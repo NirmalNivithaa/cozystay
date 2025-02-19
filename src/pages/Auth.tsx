@@ -13,9 +13,19 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [lastAttemptTime, setLastAttemptTime] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent rapid repeated requests
+    const now = Date.now();
+    if (now - lastAttemptTime < 2000) { // 2 seconds cooldown
+      toast.error("Please wait a moment before trying again");
+      return;
+    }
+    setLastAttemptTime(now);
+    
     setIsLoading(true);
 
     try {
@@ -23,7 +33,14 @@ export default function Auth() {
         ? await supabase.auth.signUp({ email, password })
         : await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('rate_limit')) {
+          toast.error("Please wait a moment before trying again");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
 
       if (isSignUp) {
         toast.success("Check your email to confirm your account");
@@ -32,13 +49,23 @@ export default function Auth() {
         navigate("/");
       }
     } catch (error: any) {
-      toast.error(error.message);
+      const errorMessage = error.message.includes('rate_limit') 
+        ? "Please wait a moment before trying again"
+        : error.message;
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    const now = Date.now();
+    if (now - lastAttemptTime < 2000) {
+      toast.error("Please wait a moment before trying again");
+      return;
+    }
+    setLastAttemptTime(now);
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -48,7 +75,10 @@ export default function Auth() {
       });
       if (error) throw error;
     } catch (error: any) {
-      toast.error(error.message);
+      const errorMessage = error.message.includes('rate_limit') 
+        ? "Please wait a moment before trying again"
+        : error.message;
+      toast.error(errorMessage);
     }
   };
 
@@ -108,6 +138,7 @@ export default function Auth() {
             variant="outline"
             className="w-full"
             onClick={handleGoogleSignIn}
+            disabled={isLoading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
