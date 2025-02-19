@@ -39,32 +39,117 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_analytics: {
+        Row: {
+          average_stay_duration: number | null
+          booking_date: string | null
+          id: string
+          revenue: number | null
+          room_id: string | null
+          total_bookings: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          average_stay_duration?: number | null
+          booking_date?: string | null
+          id?: string
+          revenue?: number | null
+          room_id?: string | null
+          total_bookings?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          average_stay_duration?: number | null
+          booking_date?: string | null
+          id?: string
+          revenue?: number | null
+          room_id?: string | null
+          total_bookings?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_analytics_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "Room"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Room: {
         Row: {
+          amenities: string[] | null
           created_at: string
           id: string
           price: number | null
+          room_category: string | null
+          room_features: Json | null
+          room_images: string[] | null
           room_no: string | null
           room_type: string | null
           Status: string | null
         }
         Insert: {
+          amenities?: string[] | null
           created_at?: string
           id?: string
           price?: number | null
+          room_category?: string | null
+          room_features?: Json | null
+          room_images?: string[] | null
           room_no?: string | null
           room_type?: string | null
           Status?: string | null
         }
         Update: {
+          amenities?: string[] | null
           created_at?: string
           id?: string
           price?: number | null
+          room_category?: string | null
+          room_features?: Json | null
+          room_images?: string[] | null
           room_no?: string | null
           room_type?: string | null
           Status?: string | null
         }
         Relationships: []
+      }
+      room_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: number | null
+          room_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          room_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          room_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_reviews_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "Room"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       User: {
         Row: {
