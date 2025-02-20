@@ -7,6 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { IndianRupee, Star, UtensilsCrossed, XCircle } from "lucide-react";
 
+interface RoomFeatures {
+  size: string;
+  bed: string;
+  view: string;
+  bathroom: string;
+  workspace?: boolean;
+  kitchenette?: boolean;
+}
+
 interface Room {
   id: string;
   room_type: string;
@@ -15,14 +24,7 @@ interface Room {
   Status: string;
   room_images: string[];
   amenities: string[];
-  room_features: {
-    size: string;
-    bed: string;
-    view: string;
-    bathroom: string;
-    workspace?: boolean;
-    kitchenette?: boolean;
-  };
+  room_features: RoomFeatures;
 }
 
 interface Booking {
@@ -77,12 +79,12 @@ const Index = () => {
     const transformedRooms: Room[] = (data || []).map(room => ({
       ...room,
       room_features: {
-        size: room.room_features?.size || '',
-        bed: room.room_features?.bed || '',
-        view: room.room_features?.view || '',
-        bathroom: room.room_features?.bathroom || '',
-        workspace: room.room_features?.workspace || false,
-        kitchenette: room.room_features?.kitchenette || false
+        size: String(room.room_features?.size || ''),
+        bed: String(room.room_features?.bed || ''),
+        view: String(room.room_features?.view || ''),
+        bathroom: String(room.room_features?.bathroom || ''),
+        workspace: Boolean(room.room_features?.workspace || false),
+        kitchenette: Boolean(room.room_features?.kitchenette || false)
       }
     }));
 
@@ -114,6 +116,7 @@ const Index = () => {
         description: "Please login to book a room",
         variant: "destructive",
       });
+      navigate("/auth");
       return;
     }
 
@@ -134,7 +137,7 @@ const Index = () => {
           user_id: user.id,
           check_in: selectedDates.from.toISOString(),
           check_out: selectedDates.to.toISOString(),
-          status: "Confirmed",
+          status: "Pending Payment",
         },
       ]);
 
@@ -152,10 +155,7 @@ const Index = () => {
       description: "Room booked successfully",
     });
 
-    fetchRooms();
-    if (user) {
-      fetchUserBookings(user.id);
-    }
+    navigate("/payment");
   };
 
   const calculateNights = () => {
