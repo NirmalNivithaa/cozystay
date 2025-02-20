@@ -4,7 +4,7 @@
 
 **URL**: https://preview--cozystay.lovable.app/auth
 
-## What technologies are used for this project?
+Technologies are used for this project
 
 This project is built with .
 
