@@ -2,8 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/28a07e6b-e6aa-4849-8fce-f9e10b8b0d56
-
+**URL**: https://preview--cozystay.lovable.app/auth
 ## How can I edit this code?
 
 There are several ways of editing your application.
