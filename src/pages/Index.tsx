@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,19 @@ const Index = () => {
       return;
     }
 
-    setRooms(data || []);
+    const transformedRooms: Room[] = (data || []).map(room => ({
+      ...room,
+      room_features: {
+        size: room.room_features?.size || '',
+        bed: room.room_features?.bed || '',
+        view: room.room_features?.view || '',
+        bathroom: room.room_features?.bathroom || '',
+        workspace: room.room_features?.workspace || false,
+        kitchenette: room.room_features?.kitchenette || false
+      }
+    }));
+
+    setRooms(transformedRooms);
   };
 
   const fetchUserBookings = async (userId: string) => {
@@ -140,9 +151,6 @@ const Index = () => {
       title: "Success",
       description: "Room booked successfully",
     });
-
-    // Send confirmation email (you'll need to implement this)
-    // This would typically be handled by a Supabase Edge Function
 
     fetchRooms();
     if (user) {
