@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -38,6 +37,10 @@ interface Booking {
   room_id: string;
 }
 
+const isValidRoomFeatures = (obj: any): obj is Record<string, unknown> => {
+  return typeof obj === 'object' && obj !== null && !Array.isArray(obj);
+};
+
 const Index = () => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -74,29 +77,21 @@ const Index = () => {
       return;
     }
 
-    const transformedRooms: Room[] = (data || []).map(room => ({
-      ...room,
-      room_features: {
-        size: typeof room.room_features === 'object' && !Array.isArray(room.room_features) 
-          ? String((room.room_features as Record<string, unknown>).size || '') 
-          : '',
-        bed: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
-          ? String((room.room_features as Record<string, unknown>).bed || '')
-          : '',
-        view: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
-          ? String((room.room_features as Record<string, unknown>).view || '')
-          : '',
-        bathroom: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
-          ? String((room.room_features as Record<string, unknown>).bathroom || '')
-          : '',
-        workspace: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
-          ? Boolean((room.room_features as Record<string, unknown>).workspace || false)
-          : false,
-        kitchenette: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
-          ? Boolean((room.room_features as Record<string, unknown>).kitchenette || false)
-          : false
-      }
-    }));
+    const transformedRooms: Room[] = (data || []).map(room => {
+      const features = isValidRoomFeatures(room.room_features) ? room.room_features : {};
+      
+      return {
+        ...room,
+        room_features: {
+          size: String(features.size || ''),
+          bed: String(features.bed || ''),
+          view: String(features.view || ''),
+          bathroom: String(features.bathroom || ''),
+          workspace: Boolean(features.workspace || false),
+          kitchenette: Boolean(features.kitchenette || false)
+        }
+      };
+    });
 
     setRooms(transformedRooms);
   };
