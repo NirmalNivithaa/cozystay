@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { IndianRupee, Star, UtensilsCrossed, XCircle } from "lucide-react";
+import { IndianRupee, Star, UtensilsCrossed, XCircle, Calendar as CalendarIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
 
 interface RoomFeatures {
   size: string;
@@ -40,13 +43,8 @@ const Index = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [user, setUser] = useState<any>(null);
-  const [selectedDates, setSelectedDates] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
-    from: undefined,
-    to: undefined,
-  });
+  const [checkInDate, setCheckInDate] = useState<Date>();
+  const [checkOutDate, setCheckOutDate] = useState<Date>();
 
   useEffect(() => {
     fetchRooms();
@@ -78,13 +76,20 @@ const Index = () => {
 
     const transformedRooms: Room[] = (data || []).map(room => ({
       ...room,
-      room_features: {
+      room_features: typeof room.room_features === 'object' ? {
         size: String(room.room_features?.size || ''),
         bed: String(room.room_features?.bed || ''),
         view: String(room.room_features?.view || ''),
         bathroom: String(room.room_features?.bathroom || ''),
         workspace: Boolean(room.room_features?.workspace || false),
         kitchenette: Boolean(room.room_features?.kitchenette || false)
+      } : {
+        size: '',
+        bed: '',
+        view: '',
+        bathroom: '',
+        workspace: false,
+        kitchenette: false
       }
     }));
 
@@ -109,6 +114,31 @@ const Index = () => {
     setBookings(data || []);
   };
 
+  const handleCancelBooking = async (bookingId: string) => {
+    const { error } = await supabase
+      .from("Booking")
+      .update({ status: "Cancelled" })
+      .eq("id", bookingId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to cancel booking",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Booking cancelled successfully",
+    });
+
+    if (user) {
+      fetchUserBookings(user.id);
+    }
+  };
+
   const handleBookRoom = async (roomId: string) => {
     if (!user) {
       toast({
@@ -120,7 +150,7 @@ const Index = () => {
       return;
     }
 
-    if (!selectedDates.from || !selectedDates.to) {
+    if (!checkInDate || !checkOutDate) {
       toast({
         title: "Error",
         description: "Please select check-in and check-out dates",
@@ -135,8 +165,8 @@ const Index = () => {
         {
           room_id: roomId,
           user_id: user.id,
-          check_in: selectedDates.from.toISOString(),
-          check_out: selectedDates.to.toISOString(),
+          check_in: checkInDate.toISOString(),
+          check_out: checkOutDate.toISOString(),
           status: "Pending Payment",
         },
       ]);
@@ -156,14 +186,6 @@ const Index = () => {
     });
 
     navigate("/payment");
-  };
-
-  const calculateNights = () => {
-    if (selectedDates.from && selectedDates.to) {
-      const diffTime = Math.abs(selectedDates.to.getTime() - selectedDates.from.getTime());
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-    return 0;
   };
 
   return (
@@ -198,15 +220,37 @@ const Index = () => {
         <div className="grid md:grid-cols-2 gap-8">
           <Card className="bg-white shadow-xl">
             <CardHeader>
-              <CardTitle>Select Dates</CardTitle>
+              <CardTitle>Select Check-in and Check-out Dates</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="range"
-                selected={selectedDates}
-                onSelect={(range: any) => setSelectedDates(range)}
-                className="rounded-md border"
-              />
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Check-in Date</label>
+                  <div className="relative">
+                    <Input
+                      type="date"
+                      value={checkInDate ? format(checkInDate, 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setCheckInDate(new Date(e.target.value))}
+                      min={format(new Date(), 'yyyy-MM-dd')}
+                      className="w-full"
+                    />
+                    <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Check-out Date</label>
+                  <div className="relative">
+                    <Input
+                      type="date"
+                      value={checkOutDate ? format(checkOutDate, 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setCheckOutDate(new Date(e.target.value))}
+                      min={checkInDate ? format(checkInDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
+                      className="w-full"
+                    />
+                    <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -299,12 +343,24 @@ const Index = () => {
                       <p className="font-semibold">Booking ID: {booking.id}</p>
                       <p>Check-in: {new Date(booking.check_in).toLocaleDateString()}</p>
                       <p>Check-out: {new Date(booking.check_out).toLocaleDateString()}</p>
-                      <p className="text-green-600">Status: {booking.status}</p>
+                      <p className={`font-medium ${
+                        booking.status === 'Cancelled' ? 'text-red-600' :
+                        booking.status === 'Confirmed' ? 'text-green-600' :
+                        'text-orange-600'
+                      }`}>
+                        Status: {booking.status}
+                      </p>
                     </div>
-                    <Button variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Cancel
-                    </Button>
+                    {booking.status !== 'Cancelled' && (
+                      <Button
+                        onClick={() => handleCancelBooking(booking.id)}
+                        variant="outline"
+                        className="text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
