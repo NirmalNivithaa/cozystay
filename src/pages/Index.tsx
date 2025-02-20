@@ -76,20 +76,25 @@ const Index = () => {
 
     const transformedRooms: Room[] = (data || []).map(room => ({
       ...room,
-      room_features: typeof room.room_features === 'object' ? {
-        size: String(room.room_features?.size || ''),
-        bed: String(room.room_features?.bed || ''),
-        view: String(room.room_features?.view || ''),
-        bathroom: String(room.room_features?.bathroom || ''),
-        workspace: Boolean(room.room_features?.workspace || false),
-        kitchenette: Boolean(room.room_features?.kitchenette || false)
-      } : {
-        size: '',
-        bed: '',
-        view: '',
-        bathroom: '',
-        workspace: false,
-        kitchenette: false
+      room_features: {
+        size: typeof room.room_features === 'object' && !Array.isArray(room.room_features) 
+          ? String((room.room_features as Record<string, unknown>).size || '') 
+          : '',
+        bed: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
+          ? String((room.room_features as Record<string, unknown>).bed || '')
+          : '',
+        view: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
+          ? String((room.room_features as Record<string, unknown>).view || '')
+          : '',
+        bathroom: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
+          ? String((room.room_features as Record<string, unknown>).bathroom || '')
+          : '',
+        workspace: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
+          ? Boolean((room.room_features as Record<string, unknown>).workspace || false)
+          : false,
+        kitchenette: typeof room.room_features === 'object' && !Array.isArray(room.room_features)
+          ? Boolean((room.room_features as Record<string, unknown>).kitchenette || false)
+          : false
       }
     }));
 
